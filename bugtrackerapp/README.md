@@ -10,6 +10,7 @@ A small Flask app for logging, triaging, and sharing bugs with the development t
 - **Status master** (`/statuses`) — statuses are a managed table (seeded with Open/In Progress/Resolved/Closed) rather than hardcoded, so custom statuses can be added
 - **Project master** (`/projects`) — bugs can optionally be filed against a project
 - Log bugs with title, description, severity, status, project, reporter (your account), assignee (any registered account), and an optional file attachment (10 MB max)
+- **Email notifications** (`/notifications`) — when a bug is assigned to a user with an email on file, they get emailed automatically; add extra addresses (e.g. a QA distribution list) that are notified on every new bug regardless of assignee. Accounts collect an email address at registration/creation (`/register`, `/users/new`) and it can be added/edited later at `/account`.
 - Bulk-import bugs from an Excel (`.xlsx`) file at `/bugs/import`
 - Filter the bug list by status, severity, and project
 - Edit/update bug status as work progresses
@@ -51,6 +52,17 @@ variables, so no code changes are needed to host it.
 5. Deploy. On first boot the app creates its tables automatically
    (`db.create_all()`); run `python seed.py` once via a one-off shell/job on the
    host if you want the sample accounts and bugs.
+
+**Email notifications** are entirely optional and off by default. To enable them,
+set these environment variables (e.g. for Gmail with an
+[app password](https://myaccount.google.com/apppasswords), or any SMTP provider
+like SendGrid/Mailgun/Postmark):
+   - `SMTP_HOST` — e.g. `smtp.gmail.com` (if unset, notifications are skipped and
+     just logged, so the app works fine without this)
+   - `SMTP_PORT` — defaults to `587`
+   - `SMTP_USERNAME` / `SMTP_PASSWORD` — credentials for that SMTP account
+   - `SMTP_FROM` — the "From" address (defaults to `SMTP_USERNAME`)
+   - `SMTP_USE_TLS` — defaults to `true`; set to `false` if your provider doesn't use STARTTLS
 
 **Bug attachments have the same ephemeral-storage caveat as SQLite.** Uploaded
 files are saved to `instance/uploads/` on local disk — fine for a normal server,

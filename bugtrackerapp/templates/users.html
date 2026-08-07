@@ -10,17 +10,18 @@
 
   <table class="bug-table">
     <thead>
-      <tr><th>Username</th><th>Display Name</th><th>Bugs Involved In</th></tr>
+      <tr><th>Username</th><th>Display Name</th><th>Email</th><th>Bugs Involved In</th></tr>
     </thead>
     <tbody>
       {% for user in users %}
         <tr>
           <td>{{ user.username }}</td>
           <td>{{ user.display_name }}</td>
+          <td>{{ user.email or "—" }}</td>
           <td>{{ bug_counts[user.id] }}</td>
         </tr>
       {% else %}
-        <tr><td colspan="3" class="empty">No users yet.</td></tr>
+        <tr><td colspan="4" class="empty">No users yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>

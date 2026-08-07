@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Email Notifications · ELM Bug Tracking System{% endblock %}
+{% block content %}
+  <h1>Email Notifications</h1>
+
+  {% if not smtp_configured %}
+    <p class="error">
+      Outgoing email isn't configured on this server (no SMTP_HOST set), so notifications
+      will be logged but not actually sent. See the README for the environment variables
+      to set.
+    </p>
+  {% endif %}
+
+  <div class="send-box">
+    <p>
+      When a bug is assigned to a user with an email on file, that user is notified.
+      Everyone listed below also gets notified for every new bug, regardless of assignee.
+    </p>
+    <a class="btn" href="{{ url_for('new_notification_recipient') }}">+ Add Email</a>
+  </div>
+
+  <table class="bug-table">
+    <thead>
+      <tr><th>Email</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for recipient in recipients %}
+        <tr>
+          <td>{{ recipient.email }}</td>
+          <td class="actions">
+            <form method="post" action="{{ url_for('delete_notification_recipient', recipient_id=recipient.id) }}" onsubmit="return confirm('Remove this email?');">
+              <button type="submit">Remove</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="2" class="empty">No extra recipients configured.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

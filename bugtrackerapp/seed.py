@@ -2,9 +2,9 @@
 from app import Bug, Project, User, app, db
 
 SAMPLE_USERS = [
-    dict(username="aggars29", display_name="A. Aggarwal", password="changeme123"),
-    dict(username="dev.alice", display_name="Alice Chen", password="changeme123"),
-    dict(username="dev.bob", display_name="Bob Martinez", password="changeme123"),
+    dict(username="aggars29", display_name="A. Aggarwal", email="aggars29@example.com", password="changeme123"),
+    dict(username="dev.alice", display_name="Alice Chen", email="alice.chen@example.com", password="changeme123"),
+    dict(username="dev.bob", display_name="Bob Martinez", email="bob.martinez@example.com", password="changeme123"),
 ]
 
 SAMPLE_PROJECTS = [
@@ -18,7 +18,7 @@ with app.app_context():
     users = {}
     if User.query.count() == 0:
         for data in SAMPLE_USERS:
-            user = User(username=data["username"], display_name=data["display_name"])
+            user = User(username=data["username"], display_name=data["display_name"], email=data["email"])
             user.set_password(data["password"])
             db.session.add(user)
             users[data["username"]] = user

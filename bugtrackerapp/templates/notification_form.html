@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Add Notification Email · ELM Bug Tracking System{% endblock %}
+{% block content %}
+  <h1>Add a Notification Email</h1>
+
+  <form class="bug-form" method="post" style="max-width: 420px;">
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+    <label>Email Address
+      <input type="email" name="email" required autofocus placeholder="e.g. qa-team@example.com">
+    </label>
+
+    <div class="form-actions">
+      <button type="submit">Add Email</button>
+      <a href="{{ url_for('notifications') }}">Cancel</a>
+    </div>
+  </form>
+{% endblock %}

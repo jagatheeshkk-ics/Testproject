@@ -15,6 +15,10 @@
       <input type="text" name="display_name" value="{{ current_user.display_name }}">
     </label>
 
+    <label>Email <span class="optional">(for bug notifications)</span>
+      <input type="email" name="email" value="{{ current_user.email or '' }}">
+    </label>
+
     <hr>
 
     <label>Current Password
