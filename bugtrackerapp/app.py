@@ -107,7 +107,7 @@ def ensure_columns(table, needed_columns):
     existing_columns = {col["name"] for col in inspector.get_columns(table)}
     for column, column_type in needed_columns.items():
         if column not in existing_columns:
-            db.session.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {column_type}"))
+            db.session.execute(text(f'ALTER TABLE "{table}" ADD COLUMN {column} {column_type}'))
     db.session.commit()
 
 
