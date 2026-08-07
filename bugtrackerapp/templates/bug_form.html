@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ "Edit Bug" if bug else "New Bug" }} · Bug Tracker{% endblock %}
+{% block title %}{{ "Edit Bug" if bug else "New Bug" }} · ELM Bug Tracking System{% endblock %}
 {% block content %}
   <h1>{{ "Edit Bug #%d" % bug.id if bug else "Report a New Bug" }}</h1>
 
@@ -32,11 +32,16 @@
 
     <div class="row">
       <label>Reporter
-        <input type="text" name="reporter" value="{{ bug.reporter if bug else '' }}">
+        <input type="text" value="{{ bug.reporter.display_name if bug else current_user.display_name }}" disabled>
       </label>
 
       <label>Assignee
-        <input type="text" name="assignee" value="{{ bug.assignee if bug else '' }}">
+        <select name="assignee_id">
+          <option value="">Unassigned</option>
+          {% for user in users %}
+            <option value="{{ user.id }}" {% if bug and bug.assignee_id == user.id %}selected{% endif %}>{{ user.display_name }}</option>
+          {% endfor %}
+        </select>
       </label>
     </div>
 

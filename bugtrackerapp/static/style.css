@@ -16,6 +16,14 @@ body {
 .topbar .brand { color: #fff; font-weight: 700; font-size: 1.1rem; text-decoration: none; }
 .topbar nav a { color: #cfd8ea; margin-left: 18px; text-decoration: none; font-size: 0.9rem; }
 .topbar nav a:hover { color: #fff; }
+.topbar nav .whoami { color: #fff; margin-left: 22px; font-weight: 600; font-size: 0.85rem; }
+
+.auth-page { max-width: 380px; margin: 60px auto; text-align: center; }
+.auth-form { text-align: left; margin-top: 20px; }
+.auth-page .hint { margin-top: 16px; }
+.error { background: #fdeaea; color: #c23b3b; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; margin: 0; }
+.success { background: #e8f6ee; color: #3b9c6d; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; margin: 0; }
+.optional { font-weight: 400; color: #888; font-size: 0.8rem; }
 .content { max-width: 1000px; margin: 0 auto; padding: 24px; }
 
 .summary { display: flex; gap: 12px; margin: 16px 0 24px; flex-wrap: wrap; }
@@ -64,3 +72,9 @@ body {
 .no-print button { padding: 8px 14px; border-radius: 6px; border: 1px solid #1c2b4a; background: #fff; cursor: pointer; }
 .hint { color: #777; font-size: 0.85rem; }
 @media print { .no-print { display: none; } }
+
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 8px 0 28px; }
+.chart-card { background: #fff; border-radius: 8px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.chart-card h2 { margin: 0 0 12px; font-size: 1rem; }
+.chart-card .chart-sub { font-weight: 400; color: #888; font-size: 0.8rem; margin-left: 6px; }
+@media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }

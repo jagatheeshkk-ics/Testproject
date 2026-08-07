@@ -6,14 +6,17 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+  {% from "_dashboard_charts.html" import render_charts %}
   <main class="content report">
     <div class="no-print">
-      <a href="{{ url_for('index') }}">&larr; Back to Bug Tracker</a>
+      <a href="{{ url_for('index') }}">&larr; Back to ELM Bug Tracking System</a>
       <button onclick="window.print()">Print / Save as PDF</button>
     </div>
 
     <h1>Bug List — For Development Team</h1>
     <p class="generated">Generated {{ generated_at.strftime("%Y-%m-%d %H:%M UTC") }} &middot; {{ bugs|length }} bug(s)</p>
+
+    {{ render_charts(daily_labels, daily_counts, severities, severity_values, "report") }}
 
     <table class="bug-table">
       <thead>
@@ -29,8 +32,8 @@
             <td>{{ bug.description or "—" }}</td>
             <td><span class="badge severity-{{ bug.severity|lower }}">{{ bug.severity }}</span></td>
             <td><span class="badge status-{{ bug.status|lower|replace(' ', '-') }}">{{ bug.status }}</span></td>
-            <td>{{ bug.assignee or "Unassigned" }}</td>
-            <td>{{ bug.reporter or "—" }}</td>
+            <td>{{ bug.assignee.display_name if bug.assignee else "Unassigned" }}</td>
+            <td>{{ bug.reporter.display_name }}</td>
           </tr>
         {% else %}
           <tr><td colspan="7" class="empty">No bugs to report.</td></tr>
