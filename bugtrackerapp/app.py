@@ -26,8 +26,6 @@ database_url = os.environ.get("DATABASE_URL", "sqlite:///bugs.db")
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-print(f"[startup] DATABASE_URL env var set: {'DATABASE_URL' in os.environ}")
-print(f"[startup] Using database dialect: {database_url.split('://')[0]}")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB attachment limit
