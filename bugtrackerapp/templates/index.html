@@ -46,7 +46,12 @@
       {% for bug in bugs %}
         <tr>
           <td>#{{ bug.id }}</td>
-          <td>{{ bug.title }}</td>
+          <td>
+            {{ bug.title }}
+            {% if bug.attachment_filename %}
+              <a href="{{ url_for('download_attachment', bug_id=bug.id) }}" class="attachment-link" title="{{ bug.attachment_original_name }}">📎</a>
+            {% endif %}
+          </td>
           <td><span class="badge severity-{{ bug.severity|lower }}">{{ bug.severity }}</span></td>
           <td><span class="badge status-{{ bug.status|lower|replace(' ', '-') }}">{{ bug.status }}</span></td>
           <td>{{ bug.project.name if bug.project else "—" }}</td>

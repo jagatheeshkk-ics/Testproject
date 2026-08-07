@@ -3,7 +3,7 @@
 {% block content %}
   <h1>{{ "Edit Bug #%d" % bug.id if bug else "Report a New Bug" }}</h1>
 
-  <form class="bug-form" method="post">
+  <form class="bug-form" method="post" enctype="multipart/form-data">
     <label>Title
       <input type="text" name="title" required value="{{ bug.title if bug else '' }}">
     </label>
@@ -52,6 +52,16 @@
           <option value="{{ project.id }}" {% if bug and bug.project_id == project.id %}selected{% endif %}>{{ project.name }}</option>
         {% endfor %}
       </select>
+    </label>
+
+    <label>Attachment
+      {% if bug and bug.attachment_original_name %}
+        <p class="hint">
+          Current file: <a href="{{ url_for('download_attachment', bug_id=bug.id) }}">{{ bug.attachment_original_name }}</a>
+          — choose a new file below to replace it.
+        </p>
+      {% endif %}
+      <input type="file" name="attachment">
     </label>
 
     <div class="form-actions">

@@ -1,10 +1,11 @@
 import csv
 import io
 import os
+import uuid
 from datetime import datetime, timedelta
 from zipfile import BadZipFile
 
-from flask import Flask, abort, redirect, render_template, request, Response, url_for
+from flask import Flask, abort, redirect, render_template, request, Response, send_from_directory, url_for
 from flask_login import (
     LoginManager,
     UserMixin,
@@ -18,15 +19,22 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 from sqlalchemy import func
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 database_url = os.environ.get("DATABASE_URL", "sqlite:///bugs.db")
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+print(f"[startup] DATABASE_URL env var set: {'DATABASE_URL' in os.environ}")
+print(f"[startup] Using database dialect: {database_url.split('://')[0]}")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB attachment limit
 db = SQLAlchemy(app)
+
+UPLOAD_FOLDER = os.path.join(app.instance_path, "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -69,6 +77,8 @@ class Bug(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=True)
     reporter_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     assignee_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    attachment_filename = db.Column(db.String(255), nullable=True)
+    attachment_original_name = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -311,6 +321,15 @@ def index():
     )
 
 
+def save_attachment(upload):
+    if not upload or not upload.filename:
+        return None, None
+    original_name = secure_filename(upload.filename)
+    stored_name = f"{uuid.uuid4().hex}_{original_name}"
+    upload.save(os.path.join(UPLOAD_FOLDER, stored_name))
+    return stored_name, original_name
+
+
 @app.route("/bugs/new", methods=["GET", "POST"])
 @login_required
 def new_bug():
@@ -320,6 +339,7 @@ def new_bug():
     if request.method == "POST":
         assignee_id = request.form.get("assignee_id") or None
         project_id = request.form.get("project_id") or None
+        stored_name, original_name = save_attachment(request.files.get("attachment"))
         bug = Bug(
             title=request.form["title"].strip(),
             description=request.form.get("description", "").strip(),
@@ -328,6 +348,8 @@ def new_bug():
             project_id=project_id,
             reporter_id=current_user.id,
             assignee_id=assignee_id,
+            attachment_filename=stored_name,
+            attachment_original_name=original_name,
         )
         db.session.add(bug)
         db.session.commit()
@@ -471,6 +493,16 @@ def edit_bug(bug_id):
         bug.status = request.form.get("status", bug.status)
         bug.assignee_id = request.form.get("assignee_id") or None
         bug.project_id = request.form.get("project_id") or None
+
+        stored_name, original_name = save_attachment(request.files.get("attachment"))
+        if stored_name:
+            if bug.attachment_filename:
+                old_path = os.path.join(UPLOAD_FOLDER, bug.attachment_filename)
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+            bug.attachment_filename = stored_name
+            bug.attachment_original_name = original_name
+
         db.session.commit()
         return redirect(url_for("index"))
 
@@ -483,9 +515,24 @@ def edit_bug(bug_id):
 @login_required
 def delete_bug(bug_id):
     bug = Bug.query.get_or_404(bug_id)
+    if bug.attachment_filename:
+        attachment_path = os.path.join(UPLOAD_FOLDER, bug.attachment_filename)
+        if os.path.exists(attachment_path):
+            os.remove(attachment_path)
     db.session.delete(bug)
     db.session.commit()
     return redirect(url_for("index"))
+
+
+@app.route("/bugs/<int:bug_id>/attachment")
+@login_required
+def download_attachment(bug_id):
+    bug = Bug.query.get_or_404(bug_id)
+    if not bug.attachment_filename:
+        abort(404)
+    return send_from_directory(
+        UPLOAD_FOLDER, bug.attachment_filename, download_name=bug.attachment_original_name, as_attachment=True
+    )
 
 
 @app.route("/export/csv")
