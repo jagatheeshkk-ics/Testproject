@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Projects · ELM Bug Tracking System{% endblock %}
+{% block content %}
+  <h1>Projects</h1>
+
+  <div class="send-box">
+    <p>Bugs can optionally be filed against one of these projects.</p>
+    <a class="btn" href="{{ url_for('new_project') }}">+ Add Project</a>
+  </div>
+
+  <table class="bug-table">
+    <thead>
+      <tr><th>Name</th><th>Description</th><th>Bugs</th></tr>
+    </thead>
+    <tbody>
+      {% for project in projects %}
+        <tr>
+          <td>{{ project.name }}</td>
+          <td>{{ project.description or "—" }}</td>
+          <td>{{ bug_counts[project.id] }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3" class="empty">No projects yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

@@ -33,7 +33,7 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 SEVERITIES = ["Low", "Medium", "High", "Critical"]
-STATUSES = ["Open", "In Progress", "Resolved", "Closed"]
+DEFAULT_STATUSES = ["Open", "In Progress", "Resolved", "Closed"]
 
 
 class User(db.Model, UserMixin):
@@ -49,23 +49,44 @@ class User(db.Model, UserMixin):
         return check_password_hash(self.password_hash, password)
 
 
+class Status(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(30), unique=True, nullable=False)
+
+
+class Project(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.Text, nullable=False, default="")
+
+
 class Bug(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False, default="")
     severity = db.Column(db.String(20), nullable=False, default="Medium")
-    status = db.Column(db.String(20), nullable=False, default="Open")
+    status = db.Column(db.String(30), nullable=False, default="Open")
+    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=True)
     reporter_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     assignee_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    project = db.relationship("Project")
     reporter = db.relationship("User", foreign_keys=[reporter_id])
     assignee = db.relationship("User", foreign_keys=[assignee_id])
 
 
 with app.app_context():
     db.create_all()
+    if Status.query.count() == 0:
+        for name in DEFAULT_STATUSES:
+            db.session.add(Status(name=name))
+        db.session.commit()
+
+
+def all_statuses():
+    return [s.name for s in Status.query.order_by(Status.id).all()]
 
 
 @login_manager.user_loader
@@ -136,6 +157,56 @@ def new_user():
     return render_template("user_form.html", error=None)
 
 
+@app.route("/statuses")
+@login_required
+def statuses():
+    all_status_rows = Status.query.order_by(Status.id).all()
+    bug_counts = {status.id: Bug.query.filter_by(status=status.name).count() for status in all_status_rows}
+    return render_template("statuses.html", statuses=all_status_rows, bug_counts=bug_counts)
+
+
+@app.route("/statuses/new", methods=["GET", "POST"])
+@login_required
+def new_status():
+    if request.method == "POST":
+        name = request.form["name"].strip()
+        if not name:
+            return render_template("status_form.html", error="Status name is required")
+        if Status.query.filter(Status.name.ilike(name)).first():
+            return render_template("status_form.html", error="That status already exists")
+
+        db.session.add(Status(name=name))
+        db.session.commit()
+        return redirect(url_for("statuses"))
+
+    return render_template("status_form.html", error=None)
+
+
+@app.route("/projects")
+@login_required
+def projects():
+    all_projects = Project.query.order_by(Project.name).all()
+    bug_counts = {project.id: Bug.query.filter_by(project_id=project.id).count() for project in all_projects}
+    return render_template("projects.html", projects=all_projects, bug_counts=bug_counts)
+
+
+@app.route("/projects/new", methods=["GET", "POST"])
+@login_required
+def new_project():
+    if request.method == "POST":
+        name = request.form["name"].strip()
+        if not name:
+            return render_template("project_form.html", error="Project name is required")
+        if Project.query.filter(Project.name.ilike(name)).first():
+            return render_template("project_form.html", error="That project already exists")
+
+        db.session.add(Project(name=name, description=request.form.get("description", "").strip()))
+        db.session.commit()
+        return redirect(url_for("projects"))
+
+    return render_template("project_form.html", error=None)
+
+
 @app.route("/logout")
 def logout():
     logout_user()
@@ -186,12 +257,13 @@ def daily_bug_counts(days=14):
 
 
 def dashboard_stats():
-    status_counts = {status: Bug.query.filter_by(status=status).count() for status in STATUSES}
+    status_list = all_statuses()
+    status_counts = {status: Bug.query.filter_by(status=status).count() for status in status_list}
     severity_counts = {severity: Bug.query.filter_by(severity=severity).count() for severity in SEVERITIES}
     daily_labels, daily_counts = daily_bug_counts()
     return {
         "total_bugs": Bug.query.count(),
-        "statuses": STATUSES,
+        "statuses": status_list,
         "status_counts": status_counts,
         "severities": SEVERITIES,
         "severity_values": [severity_counts[s] for s in SEVERITIES],
@@ -211,24 +283,30 @@ def dashboard():
 def index():
     status_filter = request.args.get("status", "")
     severity_filter = request.args.get("severity", "")
+    project_filter = request.args.get("project", "")
 
     query = Bug.query
     if status_filter:
         query = query.filter_by(status=status_filter)
     if severity_filter:
         query = query.filter_by(severity=severity_filter)
+    if project_filter:
+        query = query.filter_by(project_id=int(project_filter))
 
     bugs = query.order_by(Bug.created_at.desc()).all()
 
-    counts = {status: Bug.query.filter_by(status=status).count() for status in STATUSES}
+    status_list = all_statuses()
+    counts = {status: Bug.query.filter_by(status=status).count() for status in status_list}
 
     return render_template(
         "index.html",
         bugs=bugs,
-        statuses=STATUSES,
+        statuses=status_list,
         severities=SEVERITIES,
+        projects=Project.query.order_by(Project.name).all(),
         status_filter=status_filter,
         severity_filter=severity_filter,
+        project_filter=project_filter,
         counts=counts,
     )
 
@@ -237,14 +315,17 @@ def index():
 @login_required
 def new_bug():
     users = User.query.order_by(User.display_name).all()
+    all_projects = Project.query.order_by(Project.name).all()
 
     if request.method == "POST":
         assignee_id = request.form.get("assignee_id") or None
+        project_id = request.form.get("project_id") or None
         bug = Bug(
             title=request.form["title"].strip(),
             description=request.form.get("description", "").strip(),
             severity=request.form.get("severity", "Medium"),
             status=request.form.get("status", "Open"),
+            project_id=project_id,
             reporter_id=current_user.id,
             assignee_id=assignee_id,
         )
@@ -252,10 +333,12 @@ def new_bug():
         db.session.commit()
         return redirect(url_for("index"))
 
-    return render_template("bug_form.html", bug=None, severities=SEVERITIES, statuses=STATUSES, users=users)
+    return render_template(
+        "bug_form.html", bug=None, severities=SEVERITIES, statuses=all_statuses(), users=users, projects=all_projects
+    )
 
 
-IMPORT_COLUMNS = ["Title", "Description", "Severity", "Status", "Assignee"]
+IMPORT_COLUMNS = ["Title", "Description", "Severity", "Status", "Project", "Assignee"]
 
 
 @app.route("/bugs/import", methods=["GET", "POST"])
@@ -295,6 +378,9 @@ def import_bugs():
         users_by_name[user.username.lower()] = user
         users_by_name[user.display_name.lower()] = user
 
+    projects_by_name = {project.name.lower(): project for project in Project.query.all()}
+    valid_statuses = all_statuses()
+
     created = 0
     rows = []
     for i, row in enumerate(rows_iter, start=2):
@@ -313,9 +399,16 @@ def import_bugs():
             severity = "Medium"
 
         status = cell(row, "Status").title()
-        if status not in STATUSES:
+        if status not in valid_statuses:
             notes.append(f'unknown status "{status}", defaulted to Open' if status else "no status given, defaulted to Open")
             status = "Open"
+
+        project = None
+        project_name = cell(row, "Project")
+        if project_name:
+            project = projects_by_name.get(project_name.lower())
+            if not project:
+                notes.append(f'unknown project "{project_name}", left unassigned')
 
         assignee = None
         assignee_name = cell(row, "Assignee")
@@ -329,6 +422,7 @@ def import_bugs():
             description=cell(row, "Description"),
             severity=severity,
             status=status,
+            project_id=project.id if project else None,
             reporter_id=current_user.id,
             assignee_id=assignee.id if assignee else None,
         )
@@ -347,7 +441,9 @@ def import_template():
     sheet = workbook.active
     sheet.title = "Bugs"
     sheet.append(IMPORT_COLUMNS)
-    sheet.append(["Example bug title", "What went wrong and how to reproduce it", "Medium", "Open", "Alice Chen"])
+    sheet.append(
+        ["Example bug title", "What went wrong and how to reproduce it", "Medium", "Open", "Website Redesign", "Alice Chen"]
+    )
     for column_cells in sheet.columns:
         sheet.column_dimensions[column_cells[0].column_letter].width = 28
 
@@ -366,6 +462,7 @@ def import_template():
 def edit_bug(bug_id):
     bug = Bug.query.get_or_404(bug_id)
     users = User.query.order_by(User.display_name).all()
+    all_projects = Project.query.order_by(Project.name).all()
 
     if request.method == "POST":
         bug.title = request.form["title"].strip()
@@ -373,10 +470,13 @@ def edit_bug(bug_id):
         bug.severity = request.form.get("severity", bug.severity)
         bug.status = request.form.get("status", bug.status)
         bug.assignee_id = request.form.get("assignee_id") or None
+        bug.project_id = request.form.get("project_id") or None
         db.session.commit()
         return redirect(url_for("index"))
 
-    return render_template("bug_form.html", bug=bug, severities=SEVERITIES, statuses=STATUSES, users=users)
+    return render_template(
+        "bug_form.html", bug=bug, severities=SEVERITIES, statuses=all_statuses(), users=users, projects=all_projects
+    )
 
 
 @app.route("/bugs/<int:bug_id>/delete", methods=["POST"])
@@ -396,7 +496,7 @@ def export_csv():
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(
-        ["ID", "Title", "Description", "Severity", "Status", "Reporter", "Assignee", "Created At", "Updated At"]
+        ["ID", "Title", "Description", "Severity", "Status", "Project", "Reporter", "Assignee", "Created At", "Updated At"]
     )
     for bug in bugs:
         writer.writerow(
@@ -406,6 +506,7 @@ def export_csv():
                 bug.description,
                 bug.severity,
                 bug.status,
+                bug.project.name if bug.project else "No Project",
                 bug.reporter.display_name,
                 bug.assignee.display_name if bug.assignee else "Unassigned",
                 bug.created_at.strftime("%Y-%m-%d %H:%M"),

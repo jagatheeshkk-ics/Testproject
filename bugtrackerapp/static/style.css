@@ -9,12 +9,15 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 0;
   background: #1c2b4a;
   color: #fff;
   padding: 14px 24px;
 }
 .topbar .brand { color: #fff; font-weight: 700; font-size: 1.1rem; text-decoration: none; }
-.topbar nav a { color: #cfd8ea; margin-left: 18px; text-decoration: none; font-size: 0.9rem; }
+.topbar nav { display: flex; flex-wrap: wrap; align-items: center; row-gap: 8px; }
+.topbar nav a { color: #cfd8ea; margin-left: 18px; text-decoration: none; font-size: 0.9rem; white-space: nowrap; }
 .topbar nav a:hover { color: #fff; }
 .topbar nav .whoami { color: #fff; margin-left: 22px; font-weight: 600; font-size: 0.85rem; }
 
@@ -45,7 +48,7 @@ body {
 .bug-table th { background: #f0f2f5; font-size: 0.8rem; text-transform: uppercase; color: #555; }
 .bug-table .empty { text-align: center; color: #888; padding: 24px; }
 
-.badge { padding: 3px 9px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; color: #fff; }
+.badge { padding: 3px 9px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; color: #fff; background: #5b6472; }
 .severity-low { background: #6c9c4e; }
 .severity-medium { background: #c99a2e; }
 .severity-high { background: #d9743b; }

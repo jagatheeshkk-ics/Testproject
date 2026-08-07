@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Statuses · ELM Bug Tracking System{% endblock %}
+{% block content %}
+  <h1>Statuses</h1>
+
+  <div class="send-box">
+    <p>These statuses are available when creating or editing a bug.</p>
+    <a class="btn" href="{{ url_for('new_status') }}">+ Add Status</a>
+  </div>
+
+  <table class="bug-table">
+    <thead>
+      <tr><th>Status</th><th>Bugs</th></tr>
+    </thead>
+    <tbody>
+      {% for status in statuses %}
+        <tr>
+          <td><span class="badge status-{{ status.name|lower|replace(' ', '-') }}">{{ status.name }}</span></td>
+          <td>{{ bug_counts[status.id] }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="2" class="empty">No statuses yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

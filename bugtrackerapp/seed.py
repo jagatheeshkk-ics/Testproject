@@ -1,10 +1,15 @@
-"""Populate the tracker with sample accounts and bugs so there's something to send."""
-from app import Bug, User, app, db
+"""Populate the tracker with sample accounts, projects, and bugs so there's something to send."""
+from app import Bug, Project, User, app, db
 
 SAMPLE_USERS = [
     dict(username="aggars29", display_name="A. Aggarwal", password="changeme123"),
     dict(username="dev.alice", display_name="Alice Chen", password="changeme123"),
     dict(username="dev.bob", display_name="Bob Martinez", password="changeme123"),
+]
+
+SAMPLE_PROJECTS = [
+    dict(name="Website Redesign", description="Public marketing site refresh"),
+    dict(name="Mobile App", description="iOS/Android companion app"),
 ]
 
 with app.app_context():
@@ -23,9 +28,23 @@ with app.app_context():
         print("Accounts already exist, skipping user seed.")
         users = {u.username: u for u in User.query.all()}
 
+    projects = {}
+    if Project.query.count() == 0:
+        for data in SAMPLE_PROJECTS:
+            project = Project(**data)
+            db.session.add(project)
+            projects[data["name"]] = project
+        db.session.commit()
+        print(f"Seeded {len(SAMPLE_PROJECTS)} projects.")
+    else:
+        print("Projects already exist, skipping project seed.")
+        projects = {p.name: p for p in Project.query.all()}
+
     reporter = users.get("aggars29") or User.query.first()
     alice = users.get("dev.alice")
     bob = users.get("dev.bob")
+    website = projects.get("Website Redesign")
+    mobile = projects.get("Mobile App")
 
     SAMPLE_BUGS = [
         dict(
@@ -34,6 +53,7 @@ with app.app_context():
             severity="Critical",
             status="Open",
             assignee=alice,
+            project=mobile,
         ),
         dict(
             title="Dashboard chart mislabels Q3 revenue",
@@ -41,6 +61,7 @@ with app.app_context():
             severity="High",
             status="In Progress",
             assignee=bob,
+            project=website,
         ),
         dict(
             title="Profile avatar upload accepts non-image files",
@@ -48,6 +69,7 @@ with app.app_context():
             severity="Medium",
             status="Open",
             assignee=alice,
+            project=website,
         ),
         dict(
             title="Footer copyright year is hardcoded",
@@ -55,13 +77,22 @@ with app.app_context():
             severity="Low",
             status="Open",
             assignee=bob,
+            project=website,
         ),
     ]
 
     if Bug.query.count() == 0:
         for data in SAMPLE_BUGS:
             assignee = data.pop("assignee")
-            db.session.add(Bug(reporter_id=reporter.id, assignee_id=assignee.id if assignee else None, **data))
+            project = data.pop("project")
+            db.session.add(
+                Bug(
+                    reporter_id=reporter.id,
+                    assignee_id=assignee.id if assignee else None,
+                    project_id=project.id if project else None,
+                    **data,
+                )
+            )
         db.session.commit()
         print(f"Seeded {len(SAMPLE_BUGS)} sample bugs.")
     else:

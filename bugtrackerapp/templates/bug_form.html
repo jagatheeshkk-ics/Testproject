@@ -45,6 +45,15 @@
       </label>
     </div>
 
+    <label>Project
+      <select name="project_id">
+        <option value="">No Project</option>
+        {% for project in projects %}
+          <option value="{{ project.id }}" {% if bug and bug.project_id == project.id %}selected{% endif %}>{{ project.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
     <div class="form-actions">
       <button type="submit">{{ "Save Changes" if bug else "Create Bug" }}</button>
       <a href="{{ url_for('index') }}">Cancel</a>

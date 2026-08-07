@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Add Status · ELM Bug Tracking System{% endblock %}
+{% block content %}
+  <h1>Add a Status</h1>
+
+  <form class="bug-form" method="post" style="max-width: 420px;">
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+    <label>Status Name
+      <input type="text" name="name" required autofocus placeholder="e.g. In Review">
+    </label>
+
+    <div class="form-actions">
+      <button type="submit">Add Status</button>
+      <a href="{{ url_for('statuses') }}">Cancel</a>
+    </div>
+  </form>
+{% endblock %}
