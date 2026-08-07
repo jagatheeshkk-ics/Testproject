@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Bug Tracker{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('index') }}">🐞 Bug Tracker</a>
+    <nav>
+      <a href="{{ url_for('new_bug') }}">+ New Bug</a>
+      <a href="{{ url_for('export_report') }}">Report View</a>
+      <a href="{{ url_for('export_csv') }}">Export CSV</a>
+    </nav>
+  </header>
+  <main class="content">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
