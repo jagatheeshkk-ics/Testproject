@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Create Account · ELM Bug Tracking System</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="content auth-page">
+    <h1>🐞 ELM Bug Tracking System</h1>
+    <form class="bug-form auth-form" method="post">
+      {% if error %}<p class="error">{{ error }}</p>{% endif %}
+      <label>Username
+        <input type="text" name="username" required autofocus>
+      </label>
+      <label>Display Name
+        <input type="text" name="display_name" placeholder="e.g. Jane Doe">
+      </label>
+      <label>Password
+        <input type="password" name="password" required>
+      </label>
+      <div class="form-actions">
+        <button type="submit">Create Account</button>
+      </div>
+    </form>
+    <p class="hint">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+  </main>
+</body>
+</html>

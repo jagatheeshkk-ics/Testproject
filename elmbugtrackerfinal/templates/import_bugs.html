@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Import Bugs · ELM Bug Tracking System{% endblock %}
+{% block content %}
+  <h1>Import Bugs from Excel</h1>
+
+  <div class="bug-form" style="max-width: 520px;">
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+    <p>
+      Upload an <code>.xlsx</code> file with columns <strong>Title</strong> (required),
+      <strong>Description</strong>, <strong>Severity</strong>, <strong>Status</strong>, and
+      <strong>Assignee</strong> (matched by username or display name).
+    </p>
+    <p><a href="{{ url_for('import_template') }}">Download a template</a> to get started.</p>
+
+    <form method="post" enctype="multipart/form-data">
+      <label>Excel File
+        <input type="file" name="file" accept=".xlsx,.xlsm" required>
+      </label>
+      <div class="form-actions">
+        <button type="submit">Import</button>
+        <a href="{{ url_for('index') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  {% if results %}
+    <h2 style="margin-top: 28px;">Import Results</h2>
+    <p class="success">Created {{ results.created }} bug(s)</p>
+
+    {% if results.rows %}
+      <table class="bug-table">
+        <thead>
+          <tr><th>Row</th><th>Title</th><th>Outcome</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          {% for r in results.rows %}
+            <tr>
+              <td>{{ r.row }}</td>
+              <td>{{ r.title }}</td>
+              <td>{{ "Created" if r.created else "Skipped" }}</td>
+              <td>{{ r.notes | join("; ") if r.notes else "—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+
+    <p><a href="{{ url_for('index') }}">View Bug List</a></p>
+  {% endif %}
+{% endblock %}

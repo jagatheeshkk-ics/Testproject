@@ -1,0 +1,60 @@
+{% macro render_charts(daily_labels, daily_counts, severities, severity_values, prefix) %}
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h2>Daily Bug Count <span class="chart-sub">Last 14 days</span></h2>
+      <canvas id="{{ prefix }}DailyChart" height="200"></canvas>
+    </div>
+    <div class="chart-card">
+      <h2>Bugs by Severity</h2>
+      <canvas id="{{ prefix }}SeverityChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script>
+    Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+    Chart.defaults.color = "#555";
+
+    new Chart(document.getElementById("{{ prefix }}DailyChart"), {
+      type: "bar",
+      data: {
+        labels: {{ daily_labels | tojson }},
+        datasets: [{
+          label: "Bugs Reported",
+          data: {{ daily_counts | tojson }},
+          backgroundColor: "#3b6fc2",
+          borderRadius: 4,
+          maxBarThickness: 28,
+        }],
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#eee" } },
+          x: { grid: { display: false } },
+        },
+      },
+    });
+
+    new Chart(document.getElementById("{{ prefix }}SeverityChart"), {
+      type: "bar",
+      data: {
+        labels: {{ severities | tojson }},
+        datasets: [{
+          label: "Bugs",
+          data: {{ severity_values | tojson }},
+          backgroundColor: ["#6c9c4e", "#c99a2e", "#d9743b", "#c23b3b"],
+          borderRadius: 4,
+          maxBarThickness: 40,
+        }],
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#eee" } },
+          x: { grid: { display: false } },
+        },
+      },
+    });
+  </script>
+{% endmacro %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Add User · ELM Bug Tracking System{% endblock %}
+{% block content %}
+  <h1>Add a User</h1>
+
+  <form class="bug-form" method="post" style="max-width: 420px;">
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+    <label>Username
+      <input type="text" name="username" required autofocus>
+    </label>
+
+    <label>Display Name
+      <input type="text" name="display_name" placeholder="e.g. Jane Doe">
+    </label>
+
+    <label>Password
+      <input type="password" name="password" required>
+    </label>
+
+    <div class="form-actions">
+      <button type="submit">Add User</button>
+      <a href="{{ url_for('users') }}">Cancel</a>
+    </div>
+  </form>
+{% endblock %}

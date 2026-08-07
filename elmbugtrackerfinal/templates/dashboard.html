@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_dashboard_charts.html" import render_charts %}
+{% block title %}Dashboard · ELM Bug Tracking System{% endblock %}
+{% block content %}
+  <h1>Dashboard</h1>
+
+  <div class="summary">
+    <div class="stat"><span class="stat-num">{{ total_bugs }}</span><span class="stat-label">Total Bugs</span></div>
+    {% for status in statuses %}
+      <div class="stat"><span class="stat-num">{{ status_counts[status] }}</span><span class="stat-label">{{ status }}</span></div>
+    {% endfor %}
+  </div>
+
+  {{ render_charts(daily_labels, daily_counts, severities, severity_values, "dash") }}
+{% endblock %}
