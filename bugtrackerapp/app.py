@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from email.message import EmailMessage
 from zipfile import BadZipFile
 
-from flask import Flask, abort, redirect, render_template, request, Response, send_from_directory, url_for
+from flask import Flask, abort, flash, redirect, render_template, request, Response, send_from_directory, url_for
 from flask_login import (
     LoginManager,
     UserMixin,
@@ -252,7 +252,7 @@ def new_user():
     if request.method == "POST":
         username = request.form["username"].strip()
         if User.query.filter_by(username=username).first():
-            return render_template("user_form.html", error="That username is already taken")
+            return render_template("user_form.html", user=None, error="That username is already taken")
 
         user = User(
             username=username,
@@ -264,7 +264,51 @@ def new_user():
         db.session.commit()
         return redirect(url_for("users"))
 
-    return render_template("user_form.html", error=None)
+    return render_template("user_form.html", user=None, error=None)
+
+
+@app.route("/users/<int:user_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+
+    if request.method == "POST":
+        username = request.form["username"].strip()
+        existing = User.query.filter_by(username=username).first()
+        if existing and existing.id != user.id:
+            return render_template("user_form.html", user=user, error="That username is already taken")
+
+        user.username = username
+        user.display_name = request.form.get("display_name", "").strip() or username
+        user.email = request.form.get("email", "").strip() or None
+
+        new_password = request.form.get("password", "").strip()
+        if new_password:
+            user.set_password(new_password)
+
+        db.session.commit()
+        return redirect(url_for("users"))
+
+    return render_template("user_form.html", user=user, error=None)
+
+
+@app.route("/users/<int:user_id>/delete", methods=["POST"])
+@login_required
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+
+    if user.id == current_user.id:
+        flash("You can't delete the account you're currently logged in as.")
+        return redirect(url_for("users"))
+
+    involved = Bug.query.filter((Bug.reporter_id == user.id) | (Bug.assignee_id == user.id)).count()
+    if involved:
+        flash(f'Can\'t delete "{user.display_name}" — they\'re reporter or assignee on {involved} bug(s).')
+        return redirect(url_for("users"))
+
+    db.session.delete(user)
+    db.session.commit()
+    return redirect(url_for("users"))
 
 
 @app.route("/statuses")
