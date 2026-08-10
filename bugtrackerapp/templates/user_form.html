@@ -1,29 +1,29 @@
 {% extends "base.html" %}
-{% block title %}Add User · ELM Bug Tracking System{% endblock %}
+{% block title %}{{ "Edit User" if user else "Add User" }} · ELM Bug Tracking System{% endblock %}
 {% block content %}
-  <h1>Add a User</h1>
+  <h1>{{ "Edit User" if user else "Add a User" }}</h1>
 
   <form class="bug-form" method="post" style="max-width: 420px;">
     {% if error %}<p class="error">{{ error }}</p>{% endif %}
 
     <label>Username
-      <input type="text" name="username" required autofocus>
+      <input type="text" name="username" required autofocus value="{{ user.username if user else '' }}">
     </label>
 
     <label>Display Name
-      <input type="text" name="display_name" placeholder="e.g. Jane Doe">
+      <input type="text" name="display_name" placeholder="e.g. Jane Doe" value="{{ user.display_name if user else '' }}">
     </label>
 
     <label>Email <span class="optional">(for bug notifications)</span>
-      <input type="email" name="email" placeholder="e.g. jane@example.com">
+      <input type="email" name="email" placeholder="e.g. jane@example.com" value="{{ user.email if user else '' }}">
     </label>
 
-    <label>Password
-      <input type="password" name="password" required>
+    <label>Password {% if user %}<span class="optional">(leave blank to keep current password)</span>{% endif %}
+      <input type="password" name="password" {% if not user %}required{% endif %}>
     </label>
 
     <div class="form-actions">
-      <button type="submit">Add User</button>
+      <button type="submit">{{ "Save Changes" if user else "Add User" }}</button>
       <a href="{{ url_for('users') }}">Cancel</a>
     </div>
   </form>
