@@ -3,6 +3,10 @@
 {% block content %}
   <h1>Users</h1>
 
+  {% for message in get_flashed_messages() %}
+    <p class="error">{{ message }}</p>
+  {% endfor %}
+
   <div class="send-box">
     <p>The accounts below are available as reporters and assignees on bugs.</p>
     <a class="btn" href="{{ url_for('new_user') }}">+ Add User</a>
@@ -10,7 +14,7 @@
 
   <table class="bug-table">
     <thead>
-      <tr><th>Username</th><th>Display Name</th><th>Email</th><th>Bugs Involved In</th></tr>
+      <tr><th>Username</th><th>Display Name</th><th>Email</th><th>Bugs Involved In</th><th></th></tr>
     </thead>
     <tbody>
       {% for user in users %}
@@ -19,9 +23,17 @@
           <td>{{ user.display_name }}</td>
           <td>{{ user.email or "—" }}</td>
           <td>{{ bug_counts[user.id] }}</td>
+          <td class="actions">
+            <a href="{{ url_for('edit_user', user_id=user.id) }}">Edit</a>
+            {% if user.id != current_user.id %}
+              <form method="post" action="{{ url_for('delete_user', user_id=user.id) }}" onsubmit="return confirm('Delete this user?');">
+                <button type="submit">Delete</button>
+              </form>
+            {% endif %}
+          </td>
         </tr>
       {% else %}
-        <tr><td colspan="4" class="empty">No users yet.</td></tr>
+        <tr><td colspan="5" class="empty">No users yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>
